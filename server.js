@@ -15,9 +15,22 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// Database setup - use PostgreSQL on Railway, SQLite locally
+// Database setup - use PostgreSQL on Railway, SQLite locally, or in-memory as fallback
 let db;
 let isPostgres = false;
+let isInMemory = false;
+
+// In-memory storage fallback
+let memoryStorage = {
+  stores: [],
+  inventory: [],
+  verifications: [],
+  nextId: {
+    stores: 1,
+    inventory: 1,
+    verifications: 1
+  }
+};
 
 if (process.env.DATABASE_URL) {
   // Railway deployment - use PostgreSQL
@@ -31,16 +44,20 @@ if (process.env.DATABASE_URL) {
   isPostgres = true;
   console.log('🐘 Using PostgreSQL for Railway deployment');
 } else {
-  // Local development - use SQLite
+  // Local development - try SQLite, fallback to in-memory
   try {
     const Database = require('better-sqlite3');
     db = new Database('sippsearcher.db');
     isPostgres = false;
+    isInMemory = false;
     console.log('🗄️  Using SQLite for local development');
   } catch (err) {
-    console.error('❌ better-sqlite3 not available. Install it with: npm install better-sqlite3');
+    console.log('⚠️  better-sqlite3 not available, using in-memory storage');
+    console.log('💡 For persistent storage, install SQLite: npm run install:local');
     console.log('🐘 For Railway deployment, set DATABASE_URL environment variable');
-    process.exit(1);
+    isPostgres = false;
+    isInMemory = true;
+    db = null;
   }
 }
 
@@ -85,7 +102,7 @@ async function initializeDatabase() {
         FOREIGN KEY (inventory_id) REFERENCES inventory (id)
       )
     `);
-  } else {
+  } else if (!isInMemory) {
     // SQLite table creation
     db.exec(`
       CREATE TABLE IF NOT EXISTS stores (
@@ -124,10 +141,29 @@ async function initializeDatabase() {
       )
     `);
   }
+  // In-memory storage doesn't need table creation
 }
 
-// Call initialize function
-initializeDatabase().catch(console.error);
+// Initialize database if not using in-memory storage
+if (!isInMemory) {
+  initializeDatabase().catch(console.error);
+} else {
+  // Add sample data to in-memory storage
+  memoryStorage.stores = [
+    { id: 1, name: "7-Eleven", address: "123 Main St, Anytown, USA", latitude: 40.7128, longitude: -74.0060, phone: "(555) 123-4567", created_at: new Date().toISOString() },
+    { id: 2, name: "Circle K", address: "456 Oak Ave, Somewhere, USA", latitude: 40.7580, longitude: -73.9855, phone: "(555) 987-6543", created_at: new Date().toISOString() },
+    { id: 3, name: "Wawa", address: "789 Pine Rd, Elsewhere, USA", latitude: 40.7282, longitude: -74.0776, phone: "(555) 456-7890", created_at: new Date().toISOString() }
+  ];
+  
+  memoryStorage.inventory = [
+    { id: 1, store_id: 1, drink_id: "monster-original", size: "16oz", price: 2.99, in_stock: true, updated_by: "Store Manager", photo_path: null, last_updated: new Date().toISOString() },
+    { id: 2, store_id: 1, drink_id: "monster-ultra-zero", size: "16oz", price: 2.99, in_stock: true, updated_by: "Store Manager", photo_path: null, last_updated: new Date().toISOString() },
+    { id: 3, store_id: 2, drink_id: "monster-original", size: "16oz", price: 2.89, in_stock: true, updated_by: "Assistant Manager", photo_path: null, last_updated: new Date().toISOString() },
+    { id: 4, store_id: 3, drink_id: "monster-ultra-red", size: "16oz", price: 3.09, in_stock: false, updated_by: "Energy Enthusiast", photo_path: null, last_updated: new Date().toISOString() }
+  ];
+  
+  memoryStorage.nextId = { stores: 4, inventory: 5, verifications: 1 };
+}
 
 // File upload configuration
 const storage = multer.diskStorage({
@@ -160,7 +196,9 @@ const monsterFlavors = JSON.parse(fs.readFileSync('./data/monster-flavors.json',
 
 // Database helper functions
 async function getAllStores() {
-  if (isPostgres) {
+  if (isInMemory) {
+    return [...memoryStorage.stores];
+  } else if (isPostgres) {
     const result = await db.query('SELECT * FROM stores ORDER BY name');
     return result.rows;
   } else {
@@ -169,6 +207,16 @@ async function getAllStores() {
 }
 
 async function getStoresNear(lat, lng, radius) {
+  if (isInMemory) {
+    return memoryStorage.stores.filter(store => {
+      const distance = calculateDistance(lat, lng, store.latitude, store.longitude);
+      return distance < radius;
+    }).map(store => ({
+      ...store,
+      distance: calculateDistance(lat, lng, store.latitude, store.longitude)
+    })).sort((a, b) => a.distance - b.distance);
+  }
+  
   const query = `
     SELECT *, 
     (6371 * acos(cos(radians($1)) * cos(radians(latitude)) * cos(radians(longitude) - radians($2)) + sin(radians($3)) * sin(radians(latitude)))) AS distance
@@ -192,7 +240,19 @@ async function getStoresNear(lat, lng, radius) {
 }
 
 async function insertStore(name, address, latitude, longitude, phone) {
-  if (isPostgres) {
+  if (isInMemory) {
+    const store = {
+      id: memoryStorage.nextId.stores++,
+      name,
+      address,
+      latitude,
+      longitude,
+      phone,
+      created_at: new Date().toISOString()
+    };
+    memoryStorage.stores.push(store);
+    return store.id;
+  } else if (isPostgres) {
     const result = await db.query(
       'INSERT INTO stores (name, address, latitude, longitude, phone) VALUES ($1, $2, $3, $4, $5) RETURNING id',
       [name, address, latitude, longitude, phone]
@@ -205,7 +265,14 @@ async function insertStore(name, address, latitude, longitude, phone) {
 }
 
 async function getStoreInventory(storeId) {
-  if (isPostgres) {
+  if (isInMemory) {
+    return memoryStorage.inventory
+      .filter(item => item.store_id == storeId)
+      .map(item => ({
+        ...item,
+        verification_count: memoryStorage.verifications.filter(v => v.inventory_id === item.id).length
+      }));
+  } else if (isPostgres) {
     const result = await db.query(`
       SELECT i.*, 
              (SELECT COUNT(*) FROM verifications WHERE inventory_id = i.id) as verification_count
@@ -226,7 +293,26 @@ async function getStoreInventory(storeId) {
 }
 
 async function insertInventory(store_id, drink_id, size, price, in_stock, updated_by, photo_path) {
-  if (isPostgres) {
+  if (isInMemory) {
+    // Remove existing entry for same store/drink/size
+    memoryStorage.inventory = memoryStorage.inventory.filter(item => 
+      !(item.store_id == store_id && item.drink_id === drink_id && item.size === size)
+    );
+    
+    const inventory = {
+      id: memoryStorage.nextId.inventory++,
+      store_id,
+      drink_id,
+      size,
+      price,
+      in_stock,
+      updated_by,
+      photo_path,
+      last_updated: new Date().toISOString()
+    };
+    memoryStorage.inventory.push(inventory);
+    return inventory.id;
+  } else if (isPostgres) {
     const result = await db.query(`
       INSERT INTO inventory (store_id, drink_id, size, price, in_stock, updated_by, photo_path) 
       VALUES ($1, $2, $3, $4, $5, $6, $7) 
@@ -246,11 +332,31 @@ async function insertInventory(store_id, drink_id, size, price, in_stock, update
 }
 
 async function insertVerification(inventory_id, user_ip) {
-  if (isPostgres) {
+  if (isInMemory) {
+    const verification = {
+      id: memoryStorage.nextId.verifications++,
+      inventory_id,
+      user_ip,
+      verified_at: new Date().toISOString()
+    };
+    memoryStorage.verifications.push(verification);
+  } else if (isPostgres) {
     await db.query('INSERT INTO verifications (inventory_id, user_ip) VALUES ($1, $2)', [inventory_id, user_ip]);
   } else {
     db.prepare('INSERT INTO verifications (inventory_id, user_ip) VALUES (?, ?)').run(inventory_id, user_ip);
   }
+}
+
+// Helper function for distance calculation (in-memory storage)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
 
 // Routes
@@ -352,4 +458,9 @@ app.get('/api/config', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🥤 SippSearcher server running on port ${PORT}`);
   console.log(`🌐 Open http://localhost:${PORT} to start searching!`);
+  
+  if (isInMemory) {
+    console.log('⚠️  Using in-memory storage - data will be lost on restart');
+    console.log('💡 For persistent storage: npm run install:local');
+  }
 }); 

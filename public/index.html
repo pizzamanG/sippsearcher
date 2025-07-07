@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🥤 SippSearcher - Find Your Energy! 🥤</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places"></script>
+    <!-- Note: Replace YOUR_API_KEY with your actual Google Maps API key -->
+</head>
+<body>
+    <div class="container">
+        <!-- Header with retro styling -->
+        <header class="retro-header">
+            <div class="blink-text">🥤 SIPPSEARCHER 🥤</div>
+            <div class="subtitle">THE ULTIMATE ENERGY DRINK FINDER</div>
+            <div class="construction">
+                <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wjRHDTkTGufMYqJeKqNYwQNAdHHdYKq2gyJYIjppVHQbGVwfhBJnAmTSCUgAAOw==" alt="Under Construction">
+                <span class="construction-text">UNDER CONSTRUCTION</span>
+                <img src="data:image/gif;base64,R0lGODlhEAAQAPIAAP///wAAAMLCwkJCQgAAAGJiYoKCgpKSkiH/C05FVFNDQVBFMi4wAwEAAAAh/hpDcmVhdGVkIHdpdGggYWpheGxvYWQuaW5mbwAh+QQJCgAAACwAAAAAEAAQAAADMwi63P4wyklrE2MIOggZnAdOmGYJRbExwroUmcG2LmDEwnHQLVsYOd2mBzkYDAdKa+dIAAAh+QQJCgAAACwAAAAAEAAQAAADNAi63P5OjCEgG4QMu7DmikRxQlFUYDEZIGBMRVsaqHwctXXf7WEYB4Ag1xjihkMZsiUkKhIAIfkECQoAAAAsAAAAABAAEAAAAzYIujIjK8pByJDMlFYvBoVjHA70GU7xSUJhmKtwHPAKzLO9HMaoKwJZ7Rf8AYPDDzKpZBqfvwQAIfkECQoAAAAsAAAAABAAEAAAAzMIumIlK8oyhpHsnFZfhYumCYUhDAQxRIdhHBGqRoKw0R8DYlJd8z0fMDgsGo/IpHI5TAAAIfkECQoAAAAsAAAAABAAEAAAAzIIunInK0rnZBTwGPNMgQwmdsNgXGJUlIWEuR5oWUIpz8pAEAMe6TwfwyYsGo/IpFKSAAAh+QQJCgAAACwAAAAAEAAQAAADMwi6IMKQORfjdOe82p4wGccc4CEuQradylesojEMBgsUc2G7sDX3lQGBMLAJibufbSlKAAAh+QQJCgAAACwAAAAAEAAQAAADMgi63P7wjRHDTkTGufMYqJeKqNYwQNAdHHdYKq2gyJYIjppVHQbGVwfhBJnAmTSCUgAAOw==" alt="Under Construction">
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="retro-nav">
+            <a href="#search" class="nav-link">🔍 SEARCH</a>
+            <a href="#add-store" class="nav-link">🏪 ADD STORE</a>
+            <a href="#update-inventory" class="nav-link">📦 UPDATE INVENTORY</a>
+            <a href="#about" class="nav-link">ℹ️ ABOUT</a>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Search Section -->
+            <section id="search" class="section">
+                <div class="section-header">
+                    <h2>🔍 FIND ENERGY DRINKS NEAR YOU</h2>
+                </div>
+                
+                <div class="search-container">
+                    <div class="form-group">
+                        <label for="location-input">Enter your location:</label>
+                        <input type="text" id="location-input" placeholder="Enter address, city, or zip code">
+                        <button onclick="getCurrentLocation()" class="retro-button">📍 USE MY LOCATION</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="radius-select">Search radius:</label>
+                        <select id="radius-select">
+                            <option value="5">5 miles</option>
+                            <option value="10" selected>10 miles</option>
+                            <option value="25">25 miles</option>
+                            <option value="50">50 miles</option>
+                        </select>
+                    </div>
+                    
+                    <button onclick="searchStores()" class="retro-button search-button">🚀 SEARCH NOW!</button>
+                </div>
+
+                <div id="search-results" class="search-results">
+                    <!-- Search results will be populated here -->
+                </div>
+            </section>
+
+            <!-- Map Section -->
+            <section id="map-section" class="section">
+                <div class="section-header">
+                    <h2>🗺️ MAP VIEW</h2>
+                </div>
+                <div id="map" class="map-container"></div>
+            </section>
+
+            <!-- Add Store Section -->
+            <section id="add-store" class="section">
+                <div class="section-header">
+                    <h2>🏪 ADD A NEW STORE</h2>
+                </div>
+                
+                <form id="add-store-form" class="retro-form">
+                    <div class="form-group">
+                        <label for="store-name">Store Name:</label>
+                        <input type="text" id="store-name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="store-address">Address:</label>
+                        <input type="text" id="store-address" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="store-phone">Phone (optional):</label>
+                        <input type="tel" id="store-phone">
+                    </div>
+                    
+                    <button type="submit" class="retro-button">➕ ADD STORE</button>
+                </form>
+            </section>
+
+            <!-- Update Inventory Section -->
+            <section id="update-inventory" class="section">
+                <div class="section-header">
+                    <h2>📦 UPDATE INVENTORY</h2>
+                </div>
+                
+                <form id="inventory-form" class="retro-form">
+                    <div class="form-group">
+                        <label for="store-select">Select Store:</label>
+                        <select id="store-select" required>
+                            <option value="">Choose a store...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="drink-select">Monster Flavor:</label>
+                        <select id="drink-select" required>
+                            <option value="">Choose a flavor...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="size-select">Size:</label>
+                        <select id="size-select" required>
+                            <option value="">Choose size...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="price-input">Price ($):</label>
+                        <input type="number" id="price-input" step="0.01" min="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="stock-status">In Stock:</label>
+                        <select id="stock-status" required>
+                            <option value="1">✅ YES</option>
+                            <option value="0">❌ NO</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="photo-upload">Photo (optional):</label>
+                        <input type="file" id="photo-upload" accept="image/*">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="updated-by">Your name/handle:</label>
+                        <input type="text" id="updated-by" placeholder="Anonymous">
+                    </div>
+                    
+                    <button type="submit" class="retro-button">📸 UPDATE INVENTORY</button>
+                </form>
+            </section>
+
+            <!-- About Section -->
+            <section id="about" class="section">
+                <div class="section-header">
+                    <h2>ℹ️ ABOUT SIPPSEARCHER</h2>
+                </div>
+                
+                <div class="about-content">
+                    <p>Welcome to SippSearcher, the most radical energy drink finder on the world wide web!</p>
+                    
+                    <div class="features-list">
+                        <div class="feature">🥤 Find Monster Energy drinks at stores near you</div>
+                        <div class="feature">📍 Real-time location-based search</div>
+                        <div class="feature">📸 Photo verification system</div>
+                        <div class="feature">💰 Price tracking</div>
+                        <div class="feature">⏰ Last updated timestamps</div>
+                        <div class="feature">✅ Community verification</div>
+                    </div>
+                    
+                    <p>Built with love and caffeine in the spirit of the early internet. This site is best viewed in Netscape Navigator 4.0 or higher!</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="retro-footer">
+            <div class="visitor-counter">
+                <img src="data:image/gif;base64,R0lGODlhCgAKAIAAAP///wAAACH5BAEAAAAALAAAAAAKAAoAAAIIhI+py+0PYysAOw==" alt="Visitor Counter">
+                <span>Visitors: <span id="visitor-count">1337</span></span>
+            </div>
+            <div class="footer-links">
+                <a href="mailto:webmaster@sippsearcher.com">📧 WEBMASTER</a>
+                <a href="#guestbook">📝 GUESTBOOK</a>
+                <a href="#awards">🏆 AWARDS</a>
+            </div>
+            <div class="copyright">
+                © 2024 SippSearcher.com - All rights reserved. Best viewed at 800x600 resolution.
+            </div>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

@@ -1,0 +1,88 @@
+{
+  "flavors": [
+    {
+      "id": "monster-original",
+      "name": "Monster Original",
+      "description": "The classic green Monster",
+      "color": "#00FF00",
+      "size_options": ["16oz", "24oz", "32oz"]
+    },
+    {
+      "id": "monster-ultra-zero",
+      "name": "Monster Ultra Zero",
+      "description": "Zero sugar, maximum Monster",
+      "color": "#FFFFFF",
+      "size_options": ["16oz", "24oz"]
+    },
+    {
+      "id": "monster-ultra-red",
+      "name": "Monster Ultra Red",
+      "description": "Cherry flavored zero sugar",
+      "color": "#FF0000",
+      "size_options": ["16oz", "24oz"]
+    },
+    {
+      "id": "monster-ultra-blue",
+      "name": "Monster Ultra Blue",
+      "description": "Mixed berry zero sugar",
+      "color": "#0000FF",
+      "size_options": ["16oz", "24oz"]
+    },
+    {
+      "id": "monster-ultra-sunrise",
+      "name": "Monster Ultra Sunrise",
+      "description": "Orange flavored zero sugar",
+      "color": "#FF6600",
+      "size_options": ["16oz", "24oz"]
+    },
+    {
+      "id": "monster-ultra-paradise",
+      "name": "Monster Ultra Paradise",
+      "description": "Kiwi lime zero sugar",
+      "color": "#00FFFF",
+      "size_options": ["16oz", "24oz"]
+    },
+    {
+      "id": "monster-ultra-black",
+      "name": "Monster Ultra Black",
+      "description": "Cherry zero sugar",
+      "color": "#000000",
+      "size_options": ["16oz", "24oz"]
+    },
+    {
+      "id": "monster-assault",
+      "name": "Monster Assault",
+      "description": "Cherry flavored original",
+      "color": "#990000",
+      "size_options": ["16oz", "24oz"]
+    },
+    {
+      "id": "monster-rehab-tea-lemonade",
+      "name": "Monster Rehab Tea + Lemonade",
+      "description": "Iced tea with lemonade",
+      "color": "#FFFF00",
+      "size_options": ["16oz"]
+    },
+    {
+      "id": "monster-mango-loco",
+      "name": "Monster Mango Loco",
+      "description": "Mango flavored juice monster",
+      "color": "#FF9900",
+      "size_options": ["16oz", "24oz"]
+    },
+    {
+      "id": "monster-pipeline-punch",
+      "name": "Monster Pipeline Punch",
+      "description": "Passion fruit, orange, guava",
+      "color": "#FF3366",
+      "size_options": ["16oz", "24oz"]
+    },
+    {
+      "id": "monster-pacific-punch",
+      "name": "Monster Pacific Punch",
+      "description": "Cherry, berry, citrus",
+      "color": "#FF0066",
+      "size_options": ["16oz", "24oz"]
+    }
+  ]
+} 

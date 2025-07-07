@@ -454,6 +454,16 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+// Health check endpoint for Railway
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    database: isPostgres ? 'PostgreSQL' : (isInMemory ? 'In-Memory' : 'SQLite'),
+    stores: isInMemory ? memoryStorage.stores.length : 'N/A'
+  });
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🥤 SippSearcher server running on port ${PORT}`);

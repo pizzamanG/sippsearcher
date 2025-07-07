@@ -19,9 +19,6 @@
     "body-parser": "^1.20.2",
     "path": "^0.12.7"
   },
-  "optionalDependencies": {
-    "better-sqlite3": "^9.2.2"
-  },
   "devDependencies": {
     "nodemon": "^3.0.1"
   },

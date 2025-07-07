@@ -9,6 +9,13 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Debug logging for Railway
+console.log('🚀 Starting SippSearcher...');
+console.log(`📍 PORT: ${PORT}`);
+console.log(`🔑 DATABASE_URL: ${process.env.DATABASE_URL ? 'SET' : 'NOT SET'}`);
+console.log(`🗺️  GOOGLE_MAPS_API_KEY: ${process.env.GOOGLE_MAPS_API_KEY ? 'SET' : 'NOT SET'}`);
+console.log(`📂 NODE_ENV: ${process.env.NODE_ENV || 'development'}`);
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
@@ -465,12 +472,38 @@ app.get('/health', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🥤 SippSearcher server running on port ${PORT}`);
-  console.log(`🌐 Open http://localhost:${PORT} to start searching!`);
+  console.log(`🌐 Server accessible at http://0.0.0.0:${PORT}`);
   
-  if (isInMemory) {
+  if (isPostgres) {
+    console.log('🐘 Connected to PostgreSQL database');
+  } else if (isInMemory) {
     console.log('⚠️  Using in-memory storage - data will be lost on restart');
-    console.log('💡 For persistent storage: npm run install:local');
+    console.log('💡 For Railway: Add PostgreSQL database in dashboard');
+  } else {
+    console.log('🗄️  Using SQLite database');
   }
+});
+
+// Handle server errors
+server.on('error', (err) => {
+  console.error('❌ Server error:', err);
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Port ${PORT} is already in use`);
+  }
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM received, shutting down gracefully');
+  server.close(() => {
+    console.log('✅ Server closed');
+    if (!isInMemory && !isPostgres && db) {
+      db.close();
+    } else if (isPostgres && db) {
+      db.end();
+    }
+    process.exit(0);
+  });
 }); 

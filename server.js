@@ -32,10 +32,16 @@ if (process.env.DATABASE_URL) {
   console.log('🐘 Using PostgreSQL for Railway deployment');
 } else {
   // Local development - use SQLite
-  const Database = require('better-sqlite3');
-  db = new Database('sippsearcher.db');
-  isPostgres = false;
-  console.log('🗄️  Using SQLite for local development');
+  try {
+    const Database = require('better-sqlite3');
+    db = new Database('sippsearcher.db');
+    isPostgres = false;
+    console.log('🗄️  Using SQLite for local development');
+  } catch (err) {
+    console.error('❌ better-sqlite3 not available. Install it with: npm install better-sqlite3');
+    console.log('🐘 For Railway deployment, set DATABASE_URL environment variable');
+    process.exit(1);
+  }
 }
 
 // Initialize database tables

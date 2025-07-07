@@ -34,14 +34,25 @@ Welcome to SippSearcher! This rad web app helps you find Monster Energy drinks a
    npm install
    ```
 
-3. **Set up Google Maps API**
+3. **For local development only - Install SQLite**
+   ```bash
+   npm install better-sqlite3
+   ```
+   > Note: This step is optional for Railway deployment as it uses PostgreSQL
+
+4. **Set up Google Maps API**
    - Go to [Google Cloud Console](https://console.cloud.google.com/)
    - Create a new project or select an existing one
    - Enable the Maps JavaScript API and Places API
    - Create an API key
-   - Replace `YOUR_API_KEY` in `public/index.html` with your actual API key
+   - Copy `env.template` to `.env` and add your API key
 
-4. **Run the application**
+5. **Seed the database (local development only)**
+   ```bash
+   npm run seed
+   ```
+
+6. **Run the application**
    ```bash
    # Development mode (with nodemon)
    npm run dev
@@ -50,7 +61,7 @@ Welcome to SippSearcher! This rad web app helps you find Monster Energy drinks a
    npm start
    ```
 
-5. **Open your browser**
+7. **Open your browser**
    - Navigate to `http://localhost:3000`
    - Experience the 90s nostalgia!
 

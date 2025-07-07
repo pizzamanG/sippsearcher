@@ -1,5 +1,15 @@
 // Seed script to populate the database with sample data
-const Database = require('better-sqlite3');
+// This script is for local SQLite development only
+// For Railway deployment, use: npm run seed:railway
+
+let Database;
+try {
+  Database = require('better-sqlite3');
+} catch (err) {
+  console.error('❌ better-sqlite3 not available. Install it with: npm install better-sqlite3');
+  console.log('🐘 For Railway deployment, use: npm run seed:railway');
+  process.exit(1);
+}
 
 // Create database connection
 const db = new Database('sippsearcher.db');

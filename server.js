@@ -22,36 +22,26 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// Database setup - use PostgreSQL on Railway, SQLite locally, or in-memory as fallback
-let db;
-let isPostgres = false;
-let isInMemory = false;
+const isProduction = process.env.NODE_ENV === 'production';
+const hasDatabaseUrl = !!process.env.DATABASE_URL;
 
-// In-memory storage fallback
-let memoryStorage = {
-  stores: [],
-  inventory: [],
-  verifications: [],
-  nextId: {
-    stores: 1,
-    inventory: 1,
-    verifications: 1
+let db, isPostgres = false, isInMemory = false;
+
+if (isProduction) {
+  if (!hasDatabaseUrl) {
+    console.error('❌ FATAL: DATABASE_URL is required in production! Set up a PostgreSQL database and reference its DATABASE_URL in your Railway service.');
+    process.exit(1);
   }
-};
-
-if (process.env.DATABASE_URL) {
-  // Railway deployment - use PostgreSQL
+  // Production: use PostgreSQL only
   const { Pool } = require('pg');
   db = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false
-    }
+    ssl: { rejectUnauthorized: false }
   });
   isPostgres = true;
   console.log('🐘 Using PostgreSQL for Railway deployment');
 } else {
-  // Local development - try SQLite, fallback to in-memory
+  // Local: try SQLite, fallback to in-memory
   try {
     const Database = require('better-sqlite3');
     db = new Database('sippsearcher.db');
@@ -60,8 +50,6 @@ if (process.env.DATABASE_URL) {
     console.log('🗄️  Using SQLite for local development');
   } catch (err) {
     console.log('⚠️  better-sqlite3 not available, using in-memory storage');
-    console.log('💡 For persistent storage, install SQLite: npm run install:local');
-    console.log('🐘 For Railway deployment, set DATABASE_URL environment variable');
     isPostgres = false;
     isInMemory = true;
     db = null;

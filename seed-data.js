@@ -1,9 +1,8 @@
 // Seed script to populate the database with sample data
-const sqlite3 = require('sqlite3').verbose();
-const fs = require('fs');
+const Database = require('better-sqlite3');
 
 // Create database connection
-const db = new sqlite3.Database('sippsearcher.db');
+const db = new Database('sippsearcher.db');
 
 // Sample store data
 const sampleStores = [
@@ -81,47 +80,83 @@ const sampleInventory = [
 function seedDatabase() {
     console.log('🌱 Starting database seeding...');
     
-    db.serialize(() => {
-        // Clear existing data
-        db.run('DELETE FROM verifications');
-        db.run('DELETE FROM inventory');
-        db.run('DELETE FROM stores');
+    try {
+        // Create database tables first
+        db.exec(`
+            CREATE TABLE IF NOT EXISTS stores (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                address TEXT NOT NULL,
+                latitude REAL NOT NULL,
+                longitude REAL NOT NULL,
+                phone TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        db.exec(`
+            CREATE TABLE IF NOT EXISTS inventory (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                store_id INTEGER NOT NULL,
+                drink_id TEXT NOT NULL,
+                size TEXT NOT NULL,
+                price REAL,
+                in_stock BOOLEAN DEFAULT 1,
+                last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_by TEXT,
+                photo_path TEXT,
+                FOREIGN KEY (store_id) REFERENCES stores (id)
+            )
+        `);
+
+        db.exec(`
+            CREATE TABLE IF NOT EXISTS verifications (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                inventory_id INTEGER NOT NULL,
+                user_ip TEXT,
+                verified_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (inventory_id) REFERENCES inventory (id)
+            )
+        `);
         
-        // Insert sample stores
+        // Clear existing data
+        db.exec('DELETE FROM verifications');
+        db.exec('DELETE FROM inventory');
+        db.exec('DELETE FROM stores');
+        
+        // Prepare statements for better performance
         const storeStmt = db.prepare(`
             INSERT INTO stores (name, address, latitude, longitude, phone) 
             VALUES (?, ?, ?, ?, ?)
         `);
         
-        sampleStores.forEach(store => {
-            storeStmt.run(store.name, store.address, store.latitude, store.longitude, store.phone);
-        });
-        storeStmt.finalize();
-        
-        // Insert sample inventory
         const inventoryStmt = db.prepare(`
             INSERT INTO inventory (store_id, drink_id, size, price, in_stock, updated_by, last_updated) 
             VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         `);
         
-        sampleInventory.forEach(item => {
-            inventoryStmt.run(item.store_id, item.drink_id, item.size, item.price, item.in_stock, item.updated_by);
-        });
-        inventoryStmt.finalize();
-        
-        // Add some sample verifications
         const verificationStmt = db.prepare(`
             INSERT INTO verifications (inventory_id, user_ip, verified_at) 
             VALUES (?, ?, CURRENT_TIMESTAMP)
         `);
         
+        // Insert sample stores
+        sampleStores.forEach(store => {
+            storeStmt.run(store.name, store.address, store.latitude, store.longitude, store.phone);
+        });
+        
+        // Insert sample inventory
+        sampleInventory.forEach(item => {
+            inventoryStmt.run(item.store_id, item.drink_id, item.size, item.price, item.in_stock, item.updated_by);
+        });
+        
+        // Add some sample verifications
         // Add random verifications to make data look more realistic
         for (let i = 1; i <= 10; i++) {
             const randomInventoryId = Math.floor(Math.random() * sampleInventory.length) + 1;
             const fakeIp = `192.168.1.${Math.floor(Math.random() * 255)}`;
             verificationStmt.run(randomInventoryId, fakeIp);
         }
-        verificationStmt.finalize();
         
         console.log('🎉 Database seeding completed!');
         console.log(`✅ Added ${sampleStores.length} stores`);
@@ -130,17 +165,15 @@ function seedDatabase() {
         console.log('');
         console.log('🚀 You can now start the server with: npm start');
         console.log('🌐 Open http://localhost:3000 to see SippSearcher in action!');
-    });
+        
+    } catch (error) {
+        console.error('Error seeding database:', error.message);
+    } finally {
+        // Close the database connection
+        db.close();
+        console.log('Database connection closed.');
+    }
 }
 
 // Run the seeding
-seedDatabase();
-
-// Close the database connection
-db.close((err) => {
-    if (err) {
-        console.error('Error closing database:', err.message);
-    } else {
-        console.log('Database connection closed.');
-    }
-}); 
+seedDatabase(); 

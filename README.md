@@ -137,16 +137,47 @@ The app includes data for these Monster Energy flavors:
 ## Deployment
 
 ### Railway (Recommended)
-1. Create a Railway account
-2. Connect your GitHub repository
-3. Add environment variables if needed
-4. Deploy!
+
+SippSearcher is configured to work seamlessly with Railway using PostgreSQL. Here's how to deploy:
+
+1. **Create a Railway Account**
+   - Go to [Railway.app](https://railway.app/)
+   - Sign up with GitHub
+
+2. **Deploy from GitHub**
+   - Click "Deploy from GitHub repo"
+   - Select your SippSearcher repository
+   - Click "Deploy Now"
+
+3. **Add PostgreSQL Database**
+   - In your Railway dashboard, click "New" → "Database" → "PostgreSQL"
+   - Railway will automatically provide the `DATABASE_URL` environment variable
+
+4. **Configure Environment Variables**
+   - Add your `GOOGLE_MAPS_API_KEY` in the Variables section
+   - The `DATABASE_URL` is automatically configured by Railway
+
+5. **Initial Database Setup**
+   - After deployment, run the seed script to populate your database:
+   ```bash
+   # In Railway's console or using Railway CLI
+   npm run seed:railway
+   ```
+
+6. **Access Your App**
+   - Railway will provide a public URL (e.g., `https://your-app.railway.app`)
+   - Your app is now live with PostgreSQL!
+
+### Database Architecture
+- **Local Development**: Uses SQLite (no setup required)
+- **Railway Deployment**: Automatically switches to PostgreSQL when `DATABASE_URL` is detected
+- **Dual Database Support**: Same codebase works for both environments
 
 ### Other Platforms
 The app is a standard Node.js application and can be deployed on:
-- Heroku
-- Vercel
-- Netlify
+- Heroku (with PostgreSQL addon)
+- Vercel (with external database)
+- Netlify (functions + external database)
 - DigitalOcean App Platform
 - AWS Elastic Beanstalk
 

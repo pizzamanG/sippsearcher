@@ -8,6 +8,9 @@ Your SippSearcher app is now **100% ready** for Railway deployment!
 - ✅ PostgreSQL support for Railway
 - ✅ In-memory fallback (works without database)
 - ✅ Health check endpoint at `/health`
+- ✅ Fixed 502 errors: bind to `0.0.0.0` interface
+- ✅ Added debug logging and error handling
+- ✅ Graceful shutdown handling
 
 ## 🚀 Deploy to Railway
 
@@ -51,6 +54,28 @@ Your app includes a health endpoint at `/health` that shows:
 - **Railway Production**: Uses PostgreSQL
 - **No Database**: Uses in-memory storage (still works!)
 - **Local Dev**: Install SQLite separately if needed
+
+## 🔧 Troubleshooting
+
+### 502 Bad Gateway Errors
+✅ **FIXED**: App now binds to `0.0.0.0` interface (required for Railway)
+
+### Checking Logs
+- **Deploy Logs**: Check Railway dashboard for build/start issues
+- **Health Check**: Visit `/health` endpoint to verify status
+- **Debug Info**: Startup logs show PORT, DATABASE_URL, and environment
+
+### Expected Startup Logs
+```
+🚀 Starting SippSearcher...
+📍 PORT: 3000
+🔑 DATABASE_URL: SET
+🗺️ GOOGLE_MAPS_API_KEY: SET
+🐘 Using PostgreSQL for Railway deployment
+🥤 SippSearcher server running on port 3000
+🌐 Server accessible at http://0.0.0.0:3000
+🐘 Connected to PostgreSQL database
+```
 
 ## ✅ Ready for Deployment!
 Your `package.json` and `package-lock.json` are now perfectly synchronized for Railway's `npm ci` command. 

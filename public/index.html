@@ -25,7 +25,7 @@
             <a href="#search" class="nav-link">🔍 SEARCH</a>
             <a href="#add-store" class="nav-link">🏪 ADD STORE</a>
             <a href="#update-inventory" class="nav-link">📦 UPDATE INVENTORY</a>
-            <a href="#about" class="nav-link">ℹ️ ABOUT</a>
+            <a href="#guestbook" class="nav-link">📝 GUESTBOOK</a>
         </nav>
 
         <!-- Main Content -->
@@ -150,25 +150,34 @@
                 </form>
             </section>
 
-            <!-- About Section -->
-            <section id="about" class="section">
+            <!-- Guestbook Section -->
+            <section id="guestbook" class="section">
                 <div class="section-header">
-                    <h2>ℹ️ ABOUT SIPPSEARCHER</h2>
+                    <h2>📝 GUESTBOOK</h2>
                 </div>
                 
-                <div class="about-content">
-                    <p>Welcome to SippSearcher, the most radical energy drink finder on the world wide web!</p>
-                    
-                    <div class="features-list">
-                        <div class="feature">🥤 Find Monster Energy drinks at stores near you</div>
-                        <div class="feature">📍 Real-time location-based search</div>
-                        <div class="feature">📸 Photo verification system</div>
-                        <div class="feature">💰 Price tracking</div>
-                        <div class="feature">⏰ Last updated timestamps</div>
-                        <div class="feature">✅ Community verification</div>
+                <div class="guestbook-container">
+                    <div class="guestbook-intro">
+                        <p>Sign our guestbook and let the world know you were here! Share your energy drink adventures!</p>
                     </div>
                     
-                    <p>Built with love and caffeine in the spirit of the early internet. This site is best viewed in Netscape Navigator 4.0 or higher!</p>
+                    <form id="guestbook-form" class="retro-form">
+                        <div class="form-group">
+                            <label for="guest-name">Your Name:</label>
+                            <input type="text" id="guest-name" required maxlength="100" placeholder="Enter your name or handle">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="guest-message">Message:</label>
+                            <textarea id="guest-message" required maxlength="500" rows="4" placeholder="Leave your message here..."></textarea>
+                        </div>
+                        
+                        <button type="submit" class="retro-button">✍️ SIGN GUESTBOOK</button>
+                    </form>
+                    
+                    <div id="guestbook-entries" class="guestbook-entries">
+                        <!-- Guestbook entries will be loaded here -->
+                    </div>
                 </div>
             </section>
         </main>
@@ -180,9 +189,9 @@
                 <span>Visitors: <span id="visitor-count">1337</span></span>
             </div>
             <div class="footer-links">
-                <a href="mailto:webmaster@sippsearcher.com">📧 WEBMASTER</a>
                 <a href="#guestbook">📝 GUESTBOOK</a>
-                <a href="#awards">🏆 AWARDS</a>
+                <a href="/health">📊 STATUS</a>
+                <a href="https://github.com/your-repo/sippsearcher" target="_blank">💻 SOURCE</a>
             </div>
             <div class="copyright">
                 © 2024 SippSearcher.com - All rights reserved. Best viewed at 800x600 resolution.

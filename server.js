@@ -27,6 +27,16 @@ const hasDatabaseUrl = !!process.env.DATABASE_URL;
 
 let db, isPostgres = false, isInMemory = false;
 
+// Memory storage for in-memory mode
+const memoryStorage = {
+  stores: [],
+  inventory: [],
+  verifications: [],
+  guestbook: [],
+  visitors: { count: 1337 },
+  nextId: { stores: 1, inventory: 1, verifications: 1, guestbook: 1 }
+};
+
 if (isProduction) {
   if (!hasDatabaseUrl) {
     console.error('❌ FATAL: DATABASE_URL is required in production! Set up a PostgreSQL database and reference its DATABASE_URL in your Railway service.');
@@ -97,6 +107,28 @@ async function initializeDatabase() {
         FOREIGN KEY (inventory_id) REFERENCES inventory (id)
       )
     `);
+
+    // Add visitor counter table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS visitors (
+        id SERIAL PRIMARY KEY,
+        count INTEGER DEFAULT 1337
+      )
+    `);
+
+    // Add guestbook table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS guestbook (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Initialize visitor count if not exists
+    await db.query(`INSERT INTO visitors (count) SELECT 1337 WHERE NOT EXISTS (SELECT 1 FROM visitors)`);
+
   } else if (!isInMemory) {
     // SQLite table creation
     db.exec(`
@@ -135,6 +167,27 @@ async function initializeDatabase() {
         FOREIGN KEY (inventory_id) REFERENCES inventory (id)
       )
     `);
+
+    // Add visitor counter table
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS visitors (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        count INTEGER DEFAULT 1337
+      )
+    `);
+
+    // Add guestbook table
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS guestbook (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        message TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    // Initialize visitor count if not exists
+    db.exec(`INSERT OR IGNORE INTO visitors (id, count) VALUES (1, 1337)`);
   }
   // In-memory storage doesn't need table creation
 }
@@ -157,7 +210,7 @@ if (!isInMemory) {
     { id: 4, store_id: 3, drink_id: "monster-ultra-red", size: "16oz", price: 3.09, in_stock: false, updated_by: "Energy Enthusiast", photo_path: null, last_updated: new Date().toISOString() }
   ];
   
-  memoryStorage.nextId = { stores: 4, inventory: 5, verifications: 1 };
+  memoryStorage.nextId = { stores: 4, inventory: 5, verifications: 1, guestbook: 1 };
 }
 
 // File upload configuration
@@ -212,16 +265,15 @@ async function getStoresNear(lat, lng, radius) {
     })).sort((a, b) => a.distance - b.distance);
   }
   
-  const query = `
-    SELECT *, 
-    (6371 * acos(cos(radians($1)) * cos(radians(latitude)) * cos(radians(longitude) - radians($2)) + sin(radians($3)) * sin(radians(latitude)))) AS distance
-    FROM stores
-    WHERE (6371 * acos(cos(radians($4)) * cos(radians(latitude)) * cos(radians(longitude) - radians($5)) + sin(radians($6)) * sin(radians(latitude)))) < $7
-    ORDER BY distance
-  `;
-  
   if (isPostgres) {
-    const result = await db.query(query, [lat, lng, lat, lat, lng, lat, radius]);
+    // Fixed PostgreSQL query with proper parameter handling
+    const result = await db.query(`
+      SELECT *, 
+      (6371 * acos(cos(radians($1)) * cos(radians(latitude)) * cos(radians(longitude) - radians($2)) + sin(radians($1)) * sin(radians(latitude)))) AS distance
+      FROM stores
+      WHERE (6371 * acos(cos(radians($1)) * cos(radians(latitude)) * cos(radians(longitude) - radians($2)) + sin(radians($1)) * sin(radians(latitude)))) < $3
+      ORDER BY distance
+    `, [lat, lng, radius]);
     return result.rows;
   } else {
     return db.prepare(`
@@ -342,6 +394,67 @@ async function insertVerification(inventory_id, user_ip) {
   }
 }
 
+// Visitor counter functions
+async function incrementVisitorCount() {
+  if (isInMemory) {
+    memoryStorage.visitors.count++;
+    return memoryStorage.visitors.count;
+  } else if (isPostgres) {
+    const result = await db.query('UPDATE visitors SET count = count + 1 WHERE id = 1 RETURNING count');
+    return result.rows[0]?.count || 1337;
+  } else {
+    const result = db.prepare('UPDATE visitors SET count = count + 1 WHERE id = 1').run();
+    const count = db.prepare('SELECT count FROM visitors WHERE id = 1').get();
+    return count?.count || 1337;
+  }
+}
+
+async function getVisitorCount() {
+  if (isInMemory) {
+    return memoryStorage.visitors.count;
+  } else if (isPostgres) {
+    const result = await db.query('SELECT count FROM visitors WHERE id = 1');
+    return result.rows[0]?.count || 1337;
+  } else {
+    const result = db.prepare('SELECT count FROM visitors WHERE id = 1').get();
+    return result?.count || 1337;
+  }
+}
+
+// Guestbook functions
+async function getGuestbookEntries() {
+  if (isInMemory) {
+    return [...memoryStorage.guestbook].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  } else if (isPostgres) {
+    const result = await db.query('SELECT * FROM guestbook ORDER BY created_at DESC');
+    return result.rows;
+  } else {
+    return db.prepare('SELECT * FROM guestbook ORDER BY created_at DESC').all();
+  }
+}
+
+async function addGuestbookEntry(name, message) {
+  if (isInMemory) {
+    const entry = {
+      id: memoryStorage.nextId.guestbook++,
+      name,
+      message,
+      created_at: new Date().toISOString()
+    };
+    memoryStorage.guestbook.push(entry);
+    return entry.id;
+  } else if (isPostgres) {
+    const result = await db.query(
+      'INSERT INTO guestbook (name, message) VALUES ($1, $2) RETURNING id',
+      [name, message]
+    );
+    return result.rows[0].id;
+  } else {
+    const result = db.prepare('INSERT INTO guestbook (name, message) VALUES (?, ?)').run(name, message);
+    return result.lastInsertRowid;
+  }
+}
+
 // Helper function for distance calculation (in-memory storage)
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // Earth's radius in km
@@ -355,7 +468,9 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 }
 
 // Routes
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
+  // Increment visitor count on page load
+  await incrementVisitorCount();
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
@@ -375,7 +490,7 @@ app.get('/api/stores/near/:lat/:lng/:radius', async (req, res) => {
   const { lat, lng, radius } = req.params;
   
   try {
-    const stores = await getStoresNear(lat, lng, radius);
+    const stores = await getStoresNear(parseFloat(lat), parseFloat(lng), parseFloat(radius));
     res.json(stores);
   } catch (err) {
     console.error('Error getting nearby stores:', err);
@@ -442,6 +557,44 @@ app.get('/api/flavors', (req, res) => {
   res.json(monsterFlavors);
 });
 
+// Visitor counter endpoints
+app.get('/api/visitors', async (req, res) => {
+  try {
+    const count = await getVisitorCount();
+    res.json({ count });
+  } catch (err) {
+    console.error('Error getting visitor count:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Guestbook endpoints
+app.get('/api/guestbook', async (req, res) => {
+  try {
+    const entries = await getGuestbookEntries();
+    res.json(entries);
+  } catch (err) {
+    console.error('Error getting guestbook entries:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/guestbook', async (req, res) => {
+  const { name, message } = req.body;
+  
+  if (!name || !message) {
+    return res.status(400).json({ error: 'Name and message are required' });
+  }
+  
+  try {
+    const id = await addGuestbookEntry(name, message);
+    res.json({ id });
+  } catch (err) {
+    console.error('Error adding guestbook entry:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get configuration (for API keys, etc.)
 app.get('/api/config', (req, res) => {
   res.json({
@@ -484,14 +637,8 @@ server.on('error', (err) => {
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('🛑 SIGTERM received, shutting down gracefully');
+  console.log('SIGTERM received');
   server.close(() => {
-    console.log('✅ Server closed');
-    if (!isInMemory && !isPostgres && db) {
-      db.close();
-    } else if (isPostgres && db) {
-      db.end();
-    }
-    process.exit(0);
+    console.log('Process terminated');
   });
 }); 

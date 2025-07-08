@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', function() {
     loadFlavors();
     loadStores();
     setupEventListeners();
-    animateVisitorCounter();
+    loadVisitorCount();
+    loadGuestbookEntries();
 });
 
 // Initialize the application
@@ -28,143 +29,97 @@ function initializeApp() {
 }
 
 // Initialize Google Maps
-function initMap() {
-    // Default location (center of US)
-    const defaultLocation = { lat: 39.8283, lng: -98.5795 };
-    
+async function initMap() {
+    try {
+        // Get Google Maps API key
+        const response = await fetch('/api/config');
+        const config = await response.json();
+        
+        if (!config.googleMapsApiKey) {
+            console.error('Google Maps API key not configured');
+            document.getElementById('map').innerHTML = '<div class="map-error">Map unavailable - API key not configured</div>';
+            return;
+        }
+        
+        // Load Google Maps script
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${config.googleMapsApiKey}&libraries=geometry&callback=initGoogleMap`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+    } catch (error) {
+        console.error('Error loading Google Maps:', error);
+        document.getElementById('map').innerHTML = '<div class="map-error">Map unavailable</div>';
+    }
+}
+
+// Google Maps callback
+function initGoogleMap() {
     map = new google.maps.Map(document.getElementById('map'), {
-        zoom: 4,
-        center: defaultLocation,
+        center: { lat: 40.7128, lng: -74.0060 }, // Default to NYC
+        zoom: 10,
         styles: [
+            // Retro map styling
             {
-                "elementType": "geometry",
-                "stylers": [{"color": "#1d2c4d"}]
-            },
-            {
-                "elementType": "labels.text.fill",
-                "stylers": [{"color": "#8ec3b9"}]
-            },
-            {
-                "elementType": "labels.text.stroke",
-                "stylers": [{"color": "#1a3646"}]
-            },
-            {
-                "featureType": "administrative.country",
-                "elementType": "geometry.stroke",
-                "stylers": [{"color": "#4b6878"}]
-            },
-            {
-                "featureType": "administrative.land_parcel",
-                "elementType": "labels.text.fill",
-                "stylers": [{"color": "#64779e"}]
-            },
-            {
-                "featureType": "administrative.province",
-                "elementType": "geometry.stroke",
-                "stylers": [{"color": "#4b6878"}]
-            },
-            {
-                "featureType": "landscape.man_made",
-                "elementType": "geometry.stroke",
-                "stylers": [{"color": "#334e87"}]
-            },
-            {
-                "featureType": "landscape.natural",
-                "elementType": "geometry",
-                "stylers": [{"color": "#023e58"}]
-            },
-            {
-                "featureType": "poi",
-                "elementType": "geometry",
-                "stylers": [{"color": "#283d6a"}]
-            },
-            {
-                "featureType": "poi",
-                "elementType": "labels.text.fill",
-                "stylers": [{"color": "#6f9ba5"}]
-            },
-            {
-                "featureType": "poi",
-                "elementType": "labels.text.stroke",
-                "stylers": [{"color": "#1d2c4d"}]
-            },
-            {
-                "featureType": "poi.park",
-                "elementType": "geometry.fill",
-                "stylers": [{"color": "#023e58"}]
-            },
-            {
-                "featureType": "poi.park",
-                "elementType": "labels.text.fill",
-                "stylers": [{"color": "#3C7680"}]
-            },
-            {
-                "featureType": "road",
-                "elementType": "geometry",
-                "stylers": [{"color": "#304a7d"}]
-            },
-            {
-                "featureType": "road",
-                "elementType": "labels.text.fill",
-                "stylers": [{"color": "#98a5be"}]
-            },
-            {
-                "featureType": "road",
-                "elementType": "labels.text.stroke",
-                "stylers": [{"color": "#1d2c4d"}]
-            },
-            {
-                "featureType": "road.highway",
-                "elementType": "geometry",
-                "stylers": [{"color": "#2c6675"}]
-            },
-            {
-                "featureType": "road.highway",
-                "elementType": "geometry.stroke",
-                "stylers": [{"color": "#255763"}]
-            },
-            {
-                "featureType": "road.highway",
-                "elementType": "labels.text.fill",
-                "stylers": [{"color": "#b0d5ce"}]
-            },
-            {
-                "featureType": "road.highway",
-                "elementType": "labels.text.stroke",
-                "stylers": [{"color": "#023e58"}]
-            },
-            {
-                "featureType": "transit",
-                "elementType": "labels.text.fill",
-                "stylers": [{"color": "#98a5be"}]
-            },
-            {
-                "featureType": "transit",
-                "elementType": "labels.text.stroke",
-                "stylers": [{"color": "#1d2c4d"}]
-            },
-            {
-                "featureType": "transit.line",
-                "elementType": "geometry.fill",
-                "stylers": [{"color": "#283d6a"}]
-            },
-            {
-                "featureType": "transit.station",
-                "elementType": "geometry",
-                "stylers": [{"color": "#3a4762"}]
-            },
-            {
-                "featureType": "water",
-                "elementType": "geometry",
-                "stylers": [{"color": "#0e1626"}]
-            },
-            {
-                "featureType": "water",
-                "elementType": "labels.text.fill",
-                "stylers": [{"color": "#4e6d70"}]
+                "featureType": "all",
+                "elementType": "all",
+                "stylers": [
+                    { "saturation": -80 },
+                    { "lightness": 60 }
+                ]
             }
         ]
     });
+    
+    console.log('🗺️ Google Maps initialized');
+}
+
+// Load flavors from server
+async function loadFlavors() {
+    try {
+        const response = await fetch('/api/flavors');
+        flavors = await response.json();
+        
+        // Populate flavor dropdown
+        const flavorSelect = document.getElementById('drink-select');
+        flavorSelect.innerHTML = '<option value="">Choose a flavor...</option>';
+        
+        flavors.forEach(flavor => {
+            const option = document.createElement('option');
+            option.value = flavor.id;
+            option.textContent = flavor.name;
+            flavorSelect.appendChild(option);
+        });
+        
+        console.log('🥤 Loaded flavors:', flavors.length);
+    } catch (error) {
+        console.error('Error loading flavors:', error);
+        showToast('Failed to load flavors! 😞', 'error');
+    }
+}
+
+// Load stores from server
+async function loadStores() {
+    try {
+        const response = await fetch('/api/stores');
+        stores = await response.json();
+        
+        // Populate store dropdown
+        const storeSelect = document.getElementById('store-select');
+        storeSelect.innerHTML = '<option value="">Choose a store...</option>';
+        
+        stores.forEach(store => {
+            const option = document.createElement('option');
+            option.value = store.id;
+            option.textContent = store.name + ' - ' + store.address;
+            storeSelect.appendChild(option);
+        });
+        
+        console.log('🏪 Loaded stores:', stores.length);
+    } catch (error) {
+        console.error('Error loading stores:', error);
+        showToast('Failed to load stores! 😞', 'error');
+    }
 }
 
 // Get current location
@@ -205,56 +160,6 @@ function getCurrentLocation() {
         });
     } else {
         showToast('Geolocation is not supported by this browser. 🚫', 'error');
-    }
-}
-
-// Load Monster flavors
-async function loadFlavors() {
-    try {
-        const response = await fetch('/api/flavors');
-        const data = await response.json();
-        flavors = data.flavors;
-        
-        // Populate flavor dropdown
-        const flavorSelect = document.getElementById('drink-select');
-        flavorSelect.innerHTML = '<option value="">Choose a flavor...</option>';
-        
-        flavors.forEach(flavor => {
-            const option = document.createElement('option');
-            option.value = flavor.id;
-            option.textContent = flavor.name;
-            option.setAttribute('data-color', flavor.color);
-            flavorSelect.appendChild(option);
-        });
-        
-        console.log('🥤 Loaded', flavors.length, 'Monster flavors!');
-    } catch (error) {
-        console.error('Error loading flavors:', error);
-        showToast('Failed to load Monster flavors! 😱', 'error');
-    }
-}
-
-// Load stores
-async function loadStores() {
-    try {
-        const response = await fetch('/api/stores');
-        stores = await response.json();
-        
-        // Populate store dropdown
-        const storeSelect = document.getElementById('store-select');
-        storeSelect.innerHTML = '<option value="">Choose a store...</option>';
-        
-        stores.forEach(store => {
-            const option = document.createElement('option');
-            option.value = store.id;
-            option.textContent = `${store.name} - ${store.address}`;
-            storeSelect.appendChild(option);
-        });
-        
-        console.log('🏪 Loaded', stores.length, 'stores!');
-    } catch (error) {
-        console.error('Error loading stores:', error);
-        showToast('Failed to load stores! 😱', 'error');
     }
 }
 
@@ -338,13 +243,13 @@ function displaySearchResults(stores) {
     });
 }
 
-// Load store inventory
+// Load inventory for a specific store
 async function loadStoreInventory(storeId) {
     try {
         const response = await fetch(`/api/stores/${storeId}/inventory`);
         return await response.json();
     } catch (error) {
-        console.error('Error loading inventory:', error);
+        console.error('Error loading store inventory:', error);
         return [];
     }
 }
@@ -353,56 +258,79 @@ async function loadStoreInventory(storeId) {
 function createInventoryItem(item) {
     const flavor = flavors.find(f => f.id === item.drink_id);
     const flavorName = flavor ? flavor.name : item.drink_id;
-    const statusClass = item.in_stock ? 'in-stock' : 'out-of-stock';
-    const statusText = item.in_stock ? '✅ In Stock' : '❌ Out of Stock';
-    const lastUpdated = new Date(item.last_updated).toLocaleDateString();
+    const stockStatus = item.in_stock ? '✅ In Stock' : '❌ Out of Stock';
+    const price = item.price ? `$${item.price}` : 'Price unknown';
     
     return `
-        <div class="inventory-item">
-            <div class="item-details">
-                <div class="drink-name">${flavorName}</div>
-                <div class="drink-size">${item.size}</div>
-                <div class="drink-price">${item.price ? '$' + item.price.toFixed(2) : 'Price unknown'}</div>
-                <div class="last-updated">Last updated: ${lastUpdated}</div>
-            </div>
-            <div class="item-status">
-                <div class="drink-status ${statusClass}">${statusText}</div>
-                <div class="verification-count">✓ ${item.verification_count || 0} verifications</div>
-                <button class="verify-button" onclick="verifyInventory(${item.id})">👍 VERIFY</button>
-            </div>
+        <div class="inventory-item ${item.in_stock ? 'in-stock' : 'out-of-stock'}">
+            <div class="flavor-name">${flavorName} (${item.size})</div>
+            <div class="price">${price}</div>
+            <div class="stock-status">${stockStatus}</div>
+            <div class="last-updated">Updated: ${new Date(item.last_updated).toLocaleDateString()}</div>
+            ${item.verification_count > 0 ? `<div class="verifications">👍 ${item.verification_count} verifications</div>` : ''}
+            <button onclick="verifyInventory(${item.id})" class="verify-btn">👍 Verify</button>
         </div>
     `;
 }
 
-// Add store markers to map
+// Add store markers to map with enhanced hover functionality
 function addStoreMarkersToMap(stores) {
     // Clear existing markers
     markers.forEach(marker => marker.setMap(null));
     markers = [];
     
-    stores.forEach(store => {
+    stores.forEach(async store => {
         const marker = new google.maps.Marker({
             position: { lat: store.latitude, lng: store.longitude },
             map: map,
             title: store.name,
             icon: {
-                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDOC4xMyAyIDUgNS4xMyA1IDlDNSAxNC4yNSAxMiAyMiAxMiAyMkMxMiAyMiAxOSAxNC4yNSAxOSA5QzE5IDUuMTMgMTUuODcgMiAxMiAyWk0xMiAxMS41QzEwLjYyIDExLjUgOS41IDEwLjM4IDkuNSA5QzkuNSA3LjYyIDEwLjYyIDYuNSAxMiA2LjVDMTMuMzggNi41IDE0LjUgNy42MiAxNC41IDlDMTQuNSAxMC4zOCAxMy4zOCAxMS41IDEyIDExLjVaIiBmaWxsPSIjMDBGRjAwIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMSIvPgo8L3N2Zz4K',
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE2IDJDMTAuNDggMiA2IDYuNDggNiAxMkM2IDE4IDEwIDI2IDE2IDMwQzIyIDI2IDI2IDE4IDI2IDEyQzI2IDYuNDggMjEuNTIgMiAxNiAyWiIgZmlsbD0iIzAwRkYwMCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjIiLz4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxMiIgcj0iNCIgZmlsbD0iIzAwMDAwMCIvPgo8L3N2Zz4K',
                 scaledSize: new google.maps.Size(32, 32)
             }
         });
         
-        // Add click event to show store info
-        marker.addListener('click', function() {
-            const infoWindow = new google.maps.InfoWindow({
-                content: `
-                    <div style="color: black; font-family: Arial, sans-serif;">
-                        <h3>${store.name}</h3>
-                        <p>${store.address}</p>
-                        <p>Distance: ${store.distance ? store.distance.toFixed(1) + ' miles' : 'Unknown'}</p>
+        // Load inventory for hover info
+        const inventory = await loadStoreInventory(store.id);
+        
+        // Create info window with inventory details
+        const inventoryList = inventory.length > 0 
+            ? inventory.map(item => {
+                const flavor = flavors.find(f => f.id === item.drink_id);
+                const flavorName = flavor ? flavor.name : item.drink_id;
+                const stockIcon = item.in_stock ? '✅' : '❌';
+                const price = item.price ? ` - $${item.price}` : '';
+                return `${stockIcon} ${flavorName} (${item.size})${price}`;
+            }).join('<br>')
+            : 'No inventory data available';
+        
+        const infoWindow = new google.maps.InfoWindow({
+            content: `
+                <div class="map-info-window">
+                    <h3>${store.name}</h3>
+                    <p>${store.address}</p>
+                    <div class="inventory-preview">
+                        <strong>🥤 Available Monsters:</strong><br>
+                        ${inventoryList}
                     </div>
-                `
-            });
+                </div>
+            `
+        });
+        
+        // Show info window on hover
+        marker.addListener('mouseover', function() {
             infoWindow.open(map, marker);
+        });
+        
+        // Hide info window when not hovering
+        marker.addListener('mouseout', function() {
+            infoWindow.close();
+        });
+        
+        // Click to center map on store
+        marker.addListener('click', function() {
+            map.setCenter(marker.getPosition());
+            map.setZoom(15);
         });
         
         markers.push(marker);
@@ -421,8 +349,6 @@ async function verifyInventory(inventoryId) {
         
         if (response.ok) {
             showToast('Thanks for verifying! 👍', 'success');
-            // Refresh the search results
-            searchStores();
         } else {
             showToast('Verification failed! 😞', 'error');
         }
@@ -430,6 +356,53 @@ async function verifyInventory(inventoryId) {
         console.error('Error verifying inventory:', error);
         showToast('Verification failed! 😞', 'error');
     }
+}
+
+// Load visitor count
+async function loadVisitorCount() {
+    try {
+        const response = await fetch('/api/visitors');
+        const data = await response.json();
+        document.getElementById('visitor-count').textContent = data.count;
+    } catch (error) {
+        console.error('Error loading visitor count:', error);
+    }
+}
+
+// Load guestbook entries
+async function loadGuestbookEntries() {
+    try {
+        const response = await fetch('/api/guestbook');
+        const entries = await response.json();
+        
+        const container = document.getElementById('guestbook-entries');
+        
+        if (entries.length === 0) {
+            container.innerHTML = '<div class="no-entries">No guestbook entries yet. Be the first to sign! 📝</div>';
+            return;
+        }
+        
+        container.innerHTML = entries.map(entry => `
+            <div class="guestbook-entry">
+                <div class="entry-header">
+                    <span class="entry-name">${escapeHtml(entry.name)}</span>
+                    <span class="entry-date">${new Date(entry.created_at).toLocaleDateString()}</span>
+                </div>
+                <div class="entry-message">${escapeHtml(entry.message)}</div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        console.error('Error loading guestbook entries:', error);
+        document.getElementById('guestbook-entries').innerHTML = '<div class="error">Failed to load guestbook entries</div>';
+    }
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // Setup event listeners
@@ -526,6 +499,35 @@ function setupEventListeners() {
         }
     });
     
+    // Guestbook form
+    document.getElementById('guestbook-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const name = document.getElementById('guest-name').value;
+        const message = document.getElementById('guest-message').value;
+        
+        try {
+            const response = await fetch('/api/guestbook', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, message })
+            });
+            
+            if (response.ok) {
+                showToast('Thanks for signing the guestbook! 📝', 'success');
+                document.getElementById('guestbook-form').reset();
+                loadGuestbookEntries(); // Refresh entries
+            } else {
+                showToast('Failed to add guestbook entry! 😞', 'error');
+            }
+        } catch (error) {
+            console.error('Error adding guestbook entry:', error);
+            showToast('Failed to add guestbook entry! 😞', 'error');
+        }
+    });
+    
     // Flavor selection updates size options
     document.getElementById('drink-select').addEventListener('change', function() {
         populateSizeOptions();
@@ -565,17 +567,6 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-// Animate visitor counter
-function animateVisitorCounter() {
-    const counter = document.getElementById('visitor-count');
-    let currentCount = parseInt(counter.textContent);
-    
-    setInterval(() => {
-        currentCount += Math.floor(Math.random() * 3) + 1;
-        counter.textContent = currentCount;
-    }, 5000);
-}
-
 // Easter egg - Konami code
 let konamiCode = [];
 const konamiSequence = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65]; // Up, Up, Down, Down, Left, Right, Left, Right, B, A
@@ -608,49 +599,4 @@ console.log(`
     Built with 90s nostalgia and modern web tech.
     
     Try the Konami Code: ↑↑↓↓←→←→BA
-`);
-
-// Matrix effect for background (optional)
-function createMatrixEffect() {
-    const canvas = document.createElement('canvas');
-    canvas.className = 'matrix-bg';
-    const ctx = canvas.getContext('2d');
-    
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    
-    const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}";
-    const matrixArray = matrix.split("");
-    
-    const fontSize = 10;
-    const columns = canvas.width / fontSize;
-    const drops = [];
-    
-    for (let x = 0; x < columns; x++) {
-        drops[x] = 1;
-    }
-    
-    function draw() {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        ctx.fillStyle = '#0F0';
-        ctx.font = fontSize + 'px arial';
-        
-        for (let i = 0; i < drops.length; i++) {
-            const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
-            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-            
-            if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                drops[i] = 0;
-            }
-            drops[i]++;
-        }
-    }
-    
-    setInterval(draw, 35);
-    document.body.appendChild(canvas);
-}
-
-// Uncomment to enable matrix effect
-// createMatrixEffect(); 
+`); 

@@ -619,3 +619,311 @@ body {
         margin: 0 5px;
     }
 } 
+
+/* Guestbook Styles */
+.guestbook-container {
+    background: rgba(128, 0, 128, 0.3);
+    padding: 20px;
+    border: 2px solid #FF00FF;
+    box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
+    margin-bottom: 20px;
+}
+
+.guestbook-entries {
+    margin-top: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #00FF00;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 15px;
+}
+
+.guestbook-entry {
+    background: rgba(0, 128, 0, 0.3);
+    border: 1px solid #00FF00;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 0;
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+}
+
+.entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    border-bottom: 1px dashed #00FFFF;
+    padding-bottom: 5px;
+}
+
+.entry-name {
+    font-weight: bold;
+    color: #00FFFF;
+    text-shadow: 1px 1px 0 #000000;
+}
+
+.entry-date {
+    color: #FFFF00;
+    font-size: 12px;
+}
+
+.entry-message {
+    color: #FFFFFF;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.no-entries {
+    text-align: center;
+    color: #FFFF00;
+    font-style: italic;
+    padding: 20px;
+}
+
+/* Textarea styling */
+.form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 2px solid #00FFFF;
+    background: #000000;
+    color: #00FF00;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    box-shadow: inset 0 0 5px rgba(0, 255, 255, 0.3);
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-group textarea:focus {
+    outline: none;
+    border-color: #FFFF00;
+    box-shadow: 0 0 10px #FFFF00;
+}
+
+/* Enhanced Map Info Window */
+.map-info-window {
+    background: #000000;
+    color: #00FF00;
+    font-family: 'Courier New', monospace;
+    border: 2px solid #00FFFF;
+    padding: 10px;
+    max-width: 300px;
+}
+
+.map-info-window h3 {
+    color: #00FFFF;
+    margin: 0 0 10px 0;
+    text-shadow: 1px 1px 0 #000000;
+}
+
+.map-info-window p {
+    color: #FFFF00;
+    margin: 0 0 10px 0;
+}
+
+.inventory-preview {
+    background: rgba(0, 128, 0, 0.2);
+    padding: 8px;
+    border: 1px solid #00FF00;
+    margin-top: 10px;
+}
+
+.inventory-preview strong {
+    color: #00FFFF;
+}
+
+/* Enhanced Store Results */
+.store-inventory {
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(0, 0, 255, 0.2);
+    border: 1px solid #0000FF;
+}
+
+.inventory-list {
+    margin-top: 10px;
+}
+
+.inventory-item {
+    background: rgba(0, 64, 0, 0.5);
+    border: 1px solid #00FF00;
+    padding: 10px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.inventory-item.out-of-stock {
+    background: rgba(64, 0, 0, 0.5);
+    border-color: #FF0000;
+    opacity: 0.7;
+}
+
+.flavor-name {
+    font-weight: bold;
+    color: #00FFFF;
+    flex: 1;
+}
+
+.price {
+    color: #FFFF00;
+    font-weight: bold;
+    margin: 0 10px;
+}
+
+.stock-status {
+    color: #FFFFFF;
+    margin: 0 10px;
+}
+
+.last-updated {
+    color: #CCCCCC;
+    font-size: 12px;
+    width: 100%;
+    margin-top: 5px;
+}
+
+.verifications {
+    color: #00FF00;
+    font-size: 12px;
+    margin: 0 10px;
+}
+
+.verify-btn {
+    background: linear-gradient(45deg, #00FF00, #00FFFF);
+    color: #000000;
+    border: 1px solid #FFFFFF;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.verify-btn:hover {
+    background: linear-gradient(45deg, #00FFFF, #0000FF);
+    color: #FFFFFF;
+}
+
+/* Loading states */
+.loading {
+    text-align: center;
+    color: #FFFF00;
+    font-style: italic;
+    padding: 20px;
+    animation: blink 1s infinite;
+}
+
+.error {
+    text-align: center;
+    color: #FF0000;
+    padding: 20px;
+    border: 1px solid #FF0000;
+    background: rgba(255, 0, 0, 0.1);
+}
+
+/* Map error styling */
+.map-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 400px;
+    background: rgba(255, 0, 0, 0.2);
+    color: #FF0000;
+    border: 2px solid #FF0000;
+    font-size: 18px;
+    text-align: center;
+}
+
+/* Enhanced visitor counter animation */
+#visitor-count {
+    display: inline-block;
+    animation: counter-glow 2s infinite alternate;
+}
+
+@keyframes counter-glow {
+    0% { text-shadow: 0 0 5px #FFFF00; }
+    100% { text-shadow: 0 0 15px #FFFF00, 0 0 25px #FFFF00; }
+}
+
+/* Toast notifications */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 0;
+    color: #000000;
+    font-weight: bold;
+    font-family: 'Comic Sans MS', cursive;
+    z-index: 10000;
+    animation: toast-slide-in 0.3s ease-out;
+    border: 2px solid #000000;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.toast.success {
+    background: linear-gradient(45deg, #00FF00, #00FFFF);
+}
+
+.toast.error {
+    background: linear-gradient(45deg, #FF0000, #FF6600);
+    color: #FFFFFF;
+}
+
+.toast.info {
+    background: linear-gradient(45deg, #0000FF, #8000FF);
+    color: #FFFFFF;
+}
+
+@keyframes toast-slide-in {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .inventory-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .inventory-item > * {
+        margin: 2px 0;
+    }
+    
+    .map-info-window {
+        max-width: 250px;
+    }
+    
+    .guestbook-entries {
+        max-height: 300px;
+    }
+}
+
+/* Scrollbar styling for webkit browsers */
+.guestbook-entries::-webkit-scrollbar {
+    width: 12px;
+}
+
+.guestbook-entries::-webkit-scrollbar-track {
+    background: #000000;
+    border: 1px solid #00FF00;
+}
+
+.guestbook-entries::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, #00FF00, #00FFFF);
+    border: 1px solid #000000;
+}
+
+.guestbook-entries::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(45deg, #00FFFF, #0000FF);
+} 
